@@ -3,6 +3,29 @@ import os
 from flask import Flask, jsonify, request, send_from_directory
 from datetime import datetime, timedelta
 
+class ThemeManager:
+    """
+    Manages the visual theme of the AI Health Companion.
+    Supports Light, Dark, and Medical modes.
+    """
+    def __init__(self):
+        self.themes = {
+            'light': "[LIGHT MODE]",
+            'dark': "[DARK MODE]",
+            'medical': "[MEDICAL MODE 🏥]"
+        }
+        self.current_theme = 'light'
+
+    def change_theme(self, theme_name):
+        theme_name = theme_name.strip().lower()
+        if theme_name in self.themes:
+            self.current_theme = theme_name
+            return True
+        return False
+
+    def get_indicator(self):
+        return self.themes[self.current_theme]
+
 app = Flask(__name__, static_folder='.')
 
 # --- Simulation Logic (From health_sim.py) ---
@@ -10,6 +33,7 @@ class HealthEnv:
     def __init__(self):
         self.state = {}
         self.current_step = 0
+        self.theme_manager = ThemeManager()
         self.reset()
 
     def reset(self, level='easy'):
@@ -101,8 +125,14 @@ class HealthEnv:
             self.state['emergency_status'] = True
             info += " | ALERT: Health Emergency Detected!"
 
-        self.state['log'] = info
+        self.state['log'] = f"{self.theme_manager.get_indicator()} {info}"
         return self.state, reward
+
+    def change_theme(self, theme_name):
+        return self.theme_manager.change_theme(theme_name)
+
+    def get_theme_indicator(self):
+        return self.theme_manager.get_indicator()
 
 class AICompanionAgent:
     def suggest_action(self, state, current_step):
@@ -159,6 +189,16 @@ def reset_env():
     return jsonify({
         'state': new_state,
         'current_step': env.current_step
+    })
+
+@app.route('/api/theme', methods=['POST'])
+def change_theme():
+    data = request.json
+    theme_name = data.get('theme', 'light')
+    success = env.change_theme(theme_name)
+    return jsonify({
+        'success': success,
+        'current_theme': env.get_theme_indicator()
     })
 
 if __name__ == '__main__':

@@ -2,6 +2,30 @@ import random
 import time
 from datetime import datetime, timedelta
 
+class ThemeManager:
+    """
+    Manages the visual theme of the AI Health Companion simulation.
+    Supports Light, Dark, and Medical modes.
+    """
+    def __init__(self):
+        self.themes = {
+            'light': "[LIGHT MODE]",
+            'dark': "[DARK MODE]",
+            'medical': "[MEDICAL MODE 🏥]"
+        }
+        self.current_theme = 'light'
+
+    def change_theme(self, theme_name):
+        theme_name = theme_name.strip().lower()
+        if theme_name in self.themes:
+            self.current_theme = theme_name
+            return True
+        return False
+
+    def get_indicator(self):
+        return self.themes[self.current_theme]
+
+
 class HealthEnv:
     """
     Core Simulation Engine for the AI Health Companion.
@@ -12,6 +36,7 @@ class HealthEnv:
         self.state = {}
         self.history = []
         self.current_step = 0
+        self.theme_manager = ThemeManager()
         self.reset()
 
     def reset(self, level='easy'):
@@ -133,6 +158,18 @@ class HealthEnv:
     def get_state(self):
         return self.state
 
+    def change_theme(self, theme_name):
+        """
+        Dynamically update the simulation theme.
+        """
+        return self.theme_manager.change_theme(theme_name)
+
+    def get_theme_indicator(self):
+        """
+        Get the current visual indicator for the theme.
+        """
+        return self.theme_manager.get_indicator()
+
 
 class AICompanionAgent:
     """
@@ -191,8 +228,17 @@ def run_simulation(level='medium'):
         state, reward, done, info = env.step(action)
         total_reward += reward
         
-        # 3. Log results
-        print(f"Step {env.current_step}: Action -> {action.upper()}")
+        # 3. Dynamic Theme Switching (Bonus: demonstrate switching during simulation)
+        if env.current_step == 5:
+            env.change_theme('dark')
+            print(f"\n>>> THEME CHANGED: {env.get_theme_indicator()} <<<\n")
+        elif env.current_step == 10:
+            env.change_theme('medical')
+            print(f"\n>>> THEME CHANGED: {env.get_theme_indicator()} <<<\n")
+
+        # 4. Log results with theme indicator
+        theme_indicator = env.get_theme_indicator()
+        print(f"{theme_indicator} Step {env.current_step}: Action -> {action.upper()}")
         print(f"  Reward: {reward} (Total: {total_reward})")
         print(f"  Info: {info}")
         print(f"  State: {state}")
