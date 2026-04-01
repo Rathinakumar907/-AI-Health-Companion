@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Health Companion - Simulator UI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header class="app-header">
+            <div class="logo-container">
+                <i data-lucide="activity" class="logo-icon"></i>
+                <h1>Health Companion</h1>
+            </div>
+            <div class="header-actions">
+                <span id="step-counter">Step: 0</span>
+                <button id="sos-trigger" class="sos-btn-small"><i data-lucide="phone-call"></i></button>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <!-- Simulated Dashboard -->
+            <section id="dashboard" class="view-section active">
+                <div class="simulator-controls glass mb-4">
+                    <h3>Simulation Settings</h3>
+                    <div class="level-btns">
+                        <button onclick="App.resetEnv('easy')" class="btn-sm">Easy</button>
+                        <button onclick="App.resetEnv('medium')" class="btn-sm">Medium</button>
+                        <button onclick="App.resetEnv('hard')" class="btn-sm">Hard</button>
+                    </div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i data-lucide="thermometer"></i></div>
+                        <div class="stat-info">
+                            <h3>Stress Level</h3>
+                            <div class="score-value" id="stress-display">0<span>/10</span></div>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i data-lucide="calendar"></i></div>
+                        <div class="stat-info">
+                            <h3>Next Checkup</h3>
+                            <div id="checkup-display">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-summary glass">
+                    <div class="section-title">
+                        <h3>Medication Schedule</h3>
+                        <span id="reward-display" class="reward-tag">Total Reward: 0</span>
+                    </div>
+                    <ul id="med-list" class="task-list">
+                        <!-- Meds will be injected here -->
+                    </ul>
+                </div>
+
+                <div class="ai-suggestion glass mt-4">
+                    <h3>Aura's Recommendation</h3>
+                    <div class="suggestion-box">
+                        <p id="suggestion-text">Analyzing current state...</p>
+                        <button id="execute-ai-btn" class="btn-ai">Auto Action</button>
+                    </div>
+                </div>
+
+                <div class="log-area glass mt-4">
+                    <h3>Environment Log</h3>
+                    <div id="env-log" class="log-text">Waiting for action...</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Actions (Simulation Control) -->
+        <nav class="bottom-actions glass">
+            <button class="action-btn" onclick="App.step('remind_medicine')">
+                <i data-lucide="pill"></i>
+                <span>Remind</span>
+            </button>
+            <button class="action-btn" onclick="App.step('reduce_stress')">
+                <i data-lucide="brain"></i>
+                <span>Relax</span>
+            </button>
+            <button class="action-btn" onclick="App.step('schedule_checkup')">
+                <i data-lucide="calendar-plus"></i>
+                <span>Checkup</span>
+            </button>
+            <button class="action-btn" onclick="App.step('skip')">
+                <i data-lucide="fast-forward"></i>
+                <span>Skip</span>
+            </button>
+        </nav>
+
+        <!-- Emergency Modal -->
+        <div id="sos-overlay" class="overlay hidden">
+            <div class="sos-modal glass pulse-border">
+                <i data-lucide="alert-circle" class="warning-large"></i>
+                <h2>HEALTH EMERGENCY</h2>
+                <p>Abnormal vitals detected. Take action immediately.</p>
+                <button class="btn-sos-action" onclick="App.step('handle_emergency')">Resolve Emergency</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
