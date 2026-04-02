@@ -1,0 +1,46 @@
+name: AI-Health-Companion
+version: 1.0.0
+description: A production-grade healthcare simulation for AI agents.
+tasks:
+  - id: easy
+    name: "Basic Adherence"
+    description: "Ensure the patient takes their vitamin C at 8 AM."
+    difficulty: "Easy"
+    max_steps: 12
+    initial_stress: 1.0
+    medications:
+      - id: 1
+        name: "Vitamin C"
+        time_24h: 8
+  - id: medium
+    name: "Chronic Care"
+    description: "Manage multiple medications and daily stress spikes."
+    difficulty: "Medium"
+    max_steps: 24
+    initial_stress: 5.0
+    medications:
+      - id: 1
+        name: "Aspirin"
+        time_24h: 8
+      - id: 2
+        name: "Metformin"
+        time_24h: 20
+  - id: hard
+    name: "Crisis Response"
+    description: "Handle emergencies and complex medication schedules under high stress."
+    difficulty: "Hard"
+    max_steps: 48
+    initial_stress: 8.0
+    medications:
+      - id: 1
+        name: "Lisinopril"
+        time_24h: 9
+      - id: 2
+        name: "Insulin"
+        time_24h: 13
+      - id: 3
+        name: "Atorvastatin"
+        time_24h: 21
+metadata:
+  creator: "Antigravity AI"
+  tags: ["healthcare", "reinforcement-learning", "agentic-ai", "safety"]

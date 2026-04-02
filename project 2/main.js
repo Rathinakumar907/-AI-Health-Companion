@@ -1,44 +1,56 @@
 /**
- * AI Health Companion - Simulation Frontend
- * Connects to the Flask backend to drive the health simulation.
+ * AI Health Companion - Simulation Frontend (OpenEnv Compliant)
+ * Connects to the FastAPI backend to drive the health simulation.
  */
 
 const App = {
     state: {
-        health: {},
+        observation: {},
         currentStep: 0,
         totalReward: 0,
-        suggestion: 'skip'
+        suggestion: { action_type: 'skip' },
+        done: false
     },
 
     async init() {
-        console.log('Initializing AI Health Companion Simulator...');
-        await this.resetEnv('easy'); // Start with easy mode
+        console.log('Initializing AI Health Companion (OpenEnv Edition)...');
+        await this.resetEnv('easy');
         this.initEventListeners();
-        this.startSuggestionTimer();
+        this.startPolling();
     },
 
     initEventListeners() {
+        // SOS / Emergency Handling
         document.getElementById('sos-trigger').onclick = () => {
-            document.getElementById('sos-overlay').classList.remove('hidden');
+             this.step({ action_type: 'handle_emergency' });
         };
 
+        // Execute AI Suggestion
         document.getElementById('execute-ai-btn').onclick = () => {
+            if (this.state.done) {
+                alert("Episode complete. Please reset to start again.");
+                return;
+            }
             this.step(this.state.suggestion);
         };
+
+        // Manual Reset (Adding difficulty selector logic if present, or just default)
+        // For now, let's keep it simple.
     },
 
     // --- API Calls ---
-    async resetEnv(level) {
+    async resetEnv(taskId = 'easy') {
         try {
-            const response = await fetch('/api/reset', {
+            const response = await fetch('/reset', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ level })
+                body: JSON.stringify({ task_id: taskId })
             });
             const data = await response.json();
-            this.updateState(data);
-            this.state.totalReward = 0; // Reset rewards on manual reset
+            this.state.observation = data;
+            this.state.currentStep = 0;
+            this.state.totalReward = 0;
+            this.state.done = false;
             this.render();
         } catch (err) {
             console.error('Failed to reset environment:', err);
@@ -46,19 +58,28 @@ const App = {
     },
 
     async step(action) {
+        if (this.state.done) return;
+
         try {
-            const response = await fetch('/api/step', {
+            const response = await fetch('/step', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action })
+                body: JSON.stringify(action)
             });
             const data = await response.json();
-            this.state.totalReward += data.reward;
-            this.updateState(data);
+            
+            this.state.observation = data.observation;
+            this.state.totalReward += data.reward.value;
+            this.state.done = data.done;
+            this.state.currentStep++;
+
             this.render();
             
-            // Re-fetch suggestion after step
-            this.fetchSuggestion();
+            if (this.state.done) {
+                this.showFinalGrade();
+            } else {
+                this.fetchSuggestion();
+            }
         } catch (err) {
             console.error('Failed to execute step:', err);
         }
@@ -66,45 +87,59 @@ const App = {
 
     async fetchSuggestion() {
         try {
-            const response = await fetch('/api/suggest');
+            const response = await fetch('/suggestion');
             const data = await response.json();
-            this.state.suggestion = data.suggestion;
-            this.updateSuggestionUI(data.suggestion);
+            this.state.suggestion = data;
+            this.updateSuggestionUI(data);
         } catch (err) {
             console.error('Failed to fetch suggestion:', err);
         }
     },
 
-    // --- UI Rendering ---
-    updateState(data) {
-        this.state.health = data.state;
-        this.state.currentStep = data.current_step;
+    async showFinalGrade() {
+        try {
+            const response = await fetch('/grade', { method: 'POST' });
+            const data = await response.json();
+            
+            const logArea = document.getElementById('env-log');
+            logArea.innerHTML += `<div style="color: #f59e0b; font-weight: bold; margin-top: 10px;">${data.summary}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            alert(`Simulation Complete!\nScore: ${data.score}\n${data.summary}`);
+        } catch (err) {
+            console.error('Failed to fetch grade:', err);
+        }
     },
 
+    // --- UI Rendering ---
     render() {
-        const h = this.state.health;
-        
+        const obs = this.state.observation;
+        if (!obs || !obs.medicines) return;
+
         // Stats
-        document.getElementById('stress-display').innerHTML = `${h.stress_level}<span>/10</span>`;
-        document.getElementById('checkup-display').innerText = h.upcoming_checkup;
+        document.getElementById('stress-display').innerHTML = `${obs.stress_level.toFixed(1)}<span>/10</span>`;
+        document.getElementById('checkup-display').innerText = obs.upcoming_checkup || 'N/A';
         document.getElementById('step-counter').innerText = `Step: ${this.state.currentStep}`;
-        document.getElementById('reward-display').innerText = `Total Reward: ${this.state.totalReward}`;
+        document.getElementById('reward-display').innerText = `Total Reward: ${this.state.totalReward.toFixed(1)}`;
         
         // Med List
         const medList = document.getElementById('med-list');
         medList.innerHTML = '';
-        if (h.medicines.length === 0) {
+        if (obs.medicines.length === 0) {
             medList.innerHTML = '<li class="empty-state">No medications scheduled.</li>';
         } else {
-            h.medicines.forEach(med => {
+            obs.medicines.forEach(med => {
                 const li = document.createElement('li');
                 li.className = 'task-item';
+                const statusColor = med.is_missed ? '#ef4444' : (med.taken ? '#10b981' : '#64748b');
+                const statusIcon = med.is_missed ? 'alert-triangle' : (med.taken ? 'check-circle-2' : 'clock');
+                
                 li.innerHTML = `
                     <div class="task-info">
-                        <strong>${med.name}</strong> at ${this.formatTime(med.time)}
+                        <strong>${med.name}</strong> at ${this.formatTime(med.time_24h)}
                     </div>
                     <div class="status-marker">
-                        ${med.taken ? '<i data-lucide="check-circle-2" class="check-circle" style="color:#10b981"></i>' : '<i data-lucide="clock" style="color:#64748b"></i>'}
+                        <i data-lucide="${statusIcon}" style="color:${statusColor}"></i>
                     </div>
                 `;
                 medList.appendChild(li);
@@ -112,13 +147,16 @@ const App = {
         }
 
         // Log
-        const logArea = document.getElementById('env-log');
-        logArea.innerText = `[${new Date().toLocaleTimeString()}] ${h.log}`;
-        logArea.scrollTop = logArea.scrollHeight;
+        if (obs.last_action_info) {
+            const logArea = document.getElementById('env-log');
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            logArea.innerHTML += `<div>[${timestamp}] ${obs.last_action_info}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
 
         // Emergency Overlay
         const sosOverlay = document.getElementById('sos-overlay');
-        if (h.emergency_status) {
+        if (obs.emergency_status) {
             sosOverlay.classList.remove('hidden');
         } else {
             sosOverlay.classList.add('hidden');
@@ -131,19 +169,21 @@ const App = {
     updateSuggestionUI(suggestion) {
         const textArea = document.getElementById('suggestion-text');
         const actions = {
-            'handle_emergency': 'EMERGENCY DETECTED! Use "Resolve Emergency" immediately.',
-            'remind_medicine': 'A medicine dose is due. Send a reminder now.',
-            'reduce_stress': 'Stress levels are climbing. Guided breathing is recommended.',
-            'schedule_checkup': 'Time to schedule your routine checkup.',
-            'skip': 'Health is stable. No urgent actions needed.'
+            'handle_emergency': 'EMERGENCY! Resolving emergency is critical.',
+            'remind_medicine': 'Medication is due. Remind patient now.',
+            'reduce_stress': 'Stress is high. Initiating guided breathing.',
+            'schedule_checkup': 'Scheduling routine checkup.',
+            'skip': 'All clear. No urgent tasks.'
         };
-        textArea.innerText = actions[suggestion] || 'Awaiting state analysis...';
+        textArea.innerText = actions[suggestion.action_type] || 'Analyzing state...';
     },
 
     // --- Helpers ---
-    startSuggestionTimer() {
+    startPolling() {
         this.fetchSuggestion();
-        setInterval(() => this.fetchSuggestion(), 3000); // Polling suggestion for demo
+        setInterval(() => {
+            if (!this.state.done) this.fetchSuggestion();
+        }, 5000);
     },
 
     formatTime(hour) {
