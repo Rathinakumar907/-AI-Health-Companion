@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professor Dashboard - AI Health Companion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Auth & Role Check
+        if (!localStorage.getItem('auth_token') || localStorage.getItem('user_role') !== 'professor') {
+            window.location.href = '/login.html';
+        }
+    </script>
+</head>
+<body>
+    <div id="app">
+        <header class="app-header">
+            <div class="logo-container">
+                <i data-lucide="shield-check" class="logo-icon" style="color: #6366f1;"></i>
+                <h1>Professor Dashboard</h1>
+            </div>
+            <div class="header-actions">
+                <span id="step-counter">Step: 0</span>
+                <button onclick="App.logout()" class="btn-logout" title="Logout"><i data-lucide="log-out"></i></button>
+                <button id="sos-trigger" class="sos-btn-small"><i data-lucide="phone-call"></i></button>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <section id="dashboard" class="view-section active">
+                <div class="simulator-controls glass mb-4" style="border-left: 4px solid #6366f1;">
+                    <h3 style="color: #4f46e5;">Admin Overview</h3>
+                    <p style="font-size: 0.85rem; color: #64748b;">Monitoring simulation performance and health adherence metrics.</p>
+                    <div class="level-btns mt-2">
+                        <button onclick="App.resetEnv('easy')" class="btn-sm">Easy</button>
+                        <button onclick="App.resetEnv('medium')" class="btn-sm">Medium</button>
+                        <button onclick="App.resetEnv('hard')" class="btn-sm">Hard</button>
+                    </div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i data-lucide="thermometer"></i></div>
+                        <div class="stat-info">
+                            <h3>Current Stress</h3>
+                            <div class="score-value" id="stress-display">0<span>/10</span></div>
+                        </div>
+                    </div>
+                    <div class="stat-card glass">
+                        <div class="stat-icon"><i data-lucide="calendar"></i></div>
+                        <div class="stat-info">
+                            <h3>Scheduled Checkup</h3>
+                            <div id="checkup-display">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-summary glass">
+                    <div class="section-title">
+                        <h3>Patient Adherence</h3>
+                        <span id="reward-display" class="reward-tag">Total Score: 0</span>
+                    </div>
+                    <ul id="med-list" class="task-list"></ul>
+                </div>
+
+                <div class="ai-suggestion glass mt-4">
+                    <h3>Simulation Feedback</h3>
+                    <div class="suggestion-box">
+                        <p id="suggestion-text">Waiting for simulation data...</p>
+                        <button id="execute-ai-btn" class="btn-ai" style="background: #6366f1;">Analyze State</button>
+                    </div>
+                </div>
+
+                <div class="log-area glass mt-4">
+                    <h3>System Log</h3>
+                    <div id="env-log" class="log-text">Initializing analytics...</div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-actions glass">
+            <button class="action-btn" onclick="App.step({action_type:'remind_medicine'})">
+                <i data-lucide="pill"></i>
+                <span>Remind</span>
+            </button>
+            <button class="action-btn" onclick="App.step({action_type:'reduce_stress'})">
+                <i data-lucide="brain"></i>
+                <span>Relax</span>
+            </button>
+            <button class="action-btn" onclick="App.step({action_type:'schedule_checkup'})">
+                <i data-lucide="calendar-plus"></i>
+                <span>Checkup</span>
+            </button>
+            <button class="action-btn" onclick="App.step({action_type:'skip'})">
+                <i data-lucide="fast-forward"></i>
+                <span>Skip</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="main.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

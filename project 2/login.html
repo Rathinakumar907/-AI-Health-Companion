@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Health Companion - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-page {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            text-align: center;
+        }
+        .login-header {
+            margin-bottom: 2rem;
+        }
+        .login-header .logo-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            color: #0284c7;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.5);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 12px;
+            background: #0ea5e9;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-login:hover {
+            background: #0284c7;
+            transform: translateY(-1px);
+        }
+        .error-message {
+            margin-top: 1rem;
+            color: #ef4444;
+            font-size: 0.85rem;
+            display: none;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-card glass">
+        <div class="login-header">
+            <i data-lucide="activity" class="logo-icon"></i>
+            <h2 style="font-weight: 700; color: #1e293b;">Welcome Back</h2>
+            <p style="color: #64748b; font-size: 0.9rem;">Sign in to your Health Companion</p>
+        </div>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-input" placeholder="name@health.ai" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="btn-login">Sign In</button>
+            <div id="error-box" class="error-message">Invalid email or password</div>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.05);">
+            <p style="font-size: 0.8rem; color: #94a3b8;">
+                Test Credentials:<br>
+                <b>Student:</b> student@health.ai / student123<br>
+                <b>Professor:</b> professor@health.ai / professor123
+            </p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorBox = document.getElementById('error-box');
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store token and role
+                    localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('user_role', data.role);
+                    
+                    // Redirect based on role
+                    if (data.role === 'professor') {
+                        window.location.href = '/professor_dashboard.html';
+                    } else {
+                        window.location.href = '/student_dashboard.html';
+                    }
+                } else {
+                    errorBox.innerText = data.detail || "Invalid email or password";
+                    errorBox.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                errorBox.innerText = "Connection failed. Please try again.";
+                errorBox.style.display = 'block';
+            }
+        };
+
+        // Redirect if already logged in (optional)
+        if (localStorage.getItem('auth_token')) {
+            const role = localStorage.getItem('user_role');
+            window.location.href = role === 'professor' ? '/professor_dashboard.html' : '/student_dashboard.html';
+        }
+    </script>
+</body>
+</html>

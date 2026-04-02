@@ -76,6 +76,26 @@ body {
     color: var(--text-muted);
 }
 
+.btn-logout {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-logout:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fca5a5;
+}
+
 .sos-btn-small {
     background: var(--danger);
     color: white;
